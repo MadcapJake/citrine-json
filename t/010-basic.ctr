@@ -3,8 +3,6 @@
 question := 'Who are you?'.
 answer   := 'I am Jake!'.
 
-Pen write: 'Creating JSONObject now...'.
-
 json := JSONObject new.
 
 json addObject: 'question' value: question.
