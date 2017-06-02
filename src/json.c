@@ -35,7 +35,7 @@ ctr_object* ctr_json_new(ctr_object* myself, ctr_argument* argumentList) {
 	ctr_object* jsonObjectInstance = ctr_internal_create_object(CTR_OBJECT_TYPE_OTOBJECT);
 	jsonObjectInstance->link = myself;
 
-	return ctr_json_internal_addjobj(myself, (struct json_object*) json_object_new_object());
+	return ctr_json_internal_addjobj(myself, json_object_new_object());
 }
 
 /**
@@ -66,11 +66,11 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
  **/
 ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 
-	ctr_object* keyObject = ctr_internal_cast2string(argumentList->object);
-	char* key = ctr_heap_allocate_cstring(keyObject);
-
-	ctr_object* valObject = ctr_internal_cast2string(argumentList->next->object);
+	ctr_object* valObject = ctr_internal_cast2string(argumentList->object);
 	char* val = ctr_heap_allocate_cstring(valObject);
+
+	ctr_object* keyObject = ctr_internal_cast2string(argumentList->next->object);
+	char* key = ctr_heap_allocate_cstring(keyObject);
 
 	json_object_object_add((struct json_object*) myself->value.rvalue->ptr,
 			       (const char*) key,
