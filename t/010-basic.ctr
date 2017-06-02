@@ -3,7 +3,7 @@
 question := 'Who are you?'.
 answer   := 'I am Jake!'.
 
-json := JSONObject new.
+json := JSON new.
 
 json addObject: 'question' value: question.
 json addObject: 'answer'   value: answer.

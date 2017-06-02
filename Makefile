@@ -1,7 +1,7 @@
 all:
-	gcc -g -c src/jsonobject.c -Wall -Werror -fpic -o jsonobject.o
-	gcc -shared -o mods/jsonobject/libctrjsonobject.so jsonobject.o -ljson-c
+	gcc -g -c src/json.c -Wall -Werror -fpic -o json.o
+	gcc -shared -o mods/json/libctrjson.so json.o -ljson-c
 
 clean:
-	rm mods/jsonobject/*
+	rm mods/json/*
 
