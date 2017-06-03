@@ -8,6 +8,20 @@
 /**
  * @internal
  *
+ * Throws error with object, message, and a description
+ *
+ **/
+void ctr_json_internal_error(ctr_object* myself, char* msg, char* desc) {
+	char errstr[80];
+	sprintf(errstr, "%s ~ %s", msg, desc);
+	ctr_argument errArgs;
+	errArgs.object = ctr_build_string_from_cstring(errstr);
+	ctr_block_error(myself, &errArgs);
+}
+
+/**
+ * @internal
+ *
  * Adds json_object to resource inside object
  *
  **/
@@ -35,7 +49,7 @@ ctr_object* ctr_json_new(ctr_object* myself, ctr_argument* argumentList) {
 	ctr_object* jsonObjectInstance = ctr_internal_create_object(CTR_OBJECT_TYPE_OTOBJECT);
 	jsonObjectInstance->link = myself;
 
-	return ctr_json_internal_addjobj(myself, json_object_new_object());
+	return ctr_json_internal_addjobj(jsonObjectInstance, json_object_new_object());
 }
 
 /**
@@ -48,11 +62,11 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
 
 	int res = json_object_put((json_object*) myself->value.rvalue->ptr);
 
-	if (res != 1) {
-		ctr_argument errArgs;
-		errArgs.object = ctr_build_string_from_cstring("put did not succeed in freeing the JSONObject");
-		ctr_block_error(myself, &errArgs);
-	}
+	if (res == 1)
+		ctr_json_internal_error(myself,
+					"JSON delete",
+					"Did not succeed in freeing object"
+		);
 
 	return myself;
 }
@@ -100,18 +114,32 @@ ctr_object* ctr_json_get(ctr_object* myself, ctr_argument* argumentList) {
 
 	int found = json_object_object_get_ex(jobj, key, &robj);
 
+	if (!found) {
+		char* msg_and_key = "";
+		sprintf(msg_and_key, "JSON at: '%s'", key);
+		ctr_json_internal_error(myself, msg_and_key, "Could not locate key");
+		return myself;
+	}
 	ctr_heap_free(key);
 
-	if (!found) {
-		ctr_argument errArgs;
-		errArgs.object = ctr_build_string_from_cstring("JSON get could not locate key");
-		ctr_block_error(myself, &errArgs);
-		return myself;
-	} else {
-		ctr_object* jsonObjectInstance = ctr_internal_create_object(CTR_OBJECT_TYPE_OTOBJECT);
-		jsonObjectInstance->link = myself;
+	ctr_object* jsonObjectInstance;
 
-		return ctr_json_internal_addjobj(jsonObjectInstance, robj);
+	switch(json_object_get_type(robj)) {
+		case json_type_null:
+			return ctr_build_nil();
+		case json_type_boolean:
+			return ctr_build_bool(json_object_get_boolean(robj));
+		case json_type_double:
+			return ctr_build_number_from_float(json_object_get_double(robj));
+		case json_type_int:
+			return ctr_build_number_from_float(json_object_get_int(robj));
+		case json_type_string:
+			return ctr_build_string_from_cstring((char*) json_object_get_string(robj));
+		default:
+			jsonObjectInstance = ctr_internal_create_object(CTR_OBJECT_TYPE_OTOBJECT);
+			jsonObjectInstance->link = myself;
+			return ctr_json_internal_addjobj(jsonObjectInstance, robj);
+
 	}
 }
 
@@ -177,6 +205,25 @@ ctr_object* ctr_json_tostring_ext2(ctr_object* myself, ctr_argument* argumentLis
 	return ctr_build_string_from_cstring((char*) json_str);
 }
 
+/**
+ *
+ * [JSON] respondTo: [string]
+ *
+ * Default response throws error for undefined behavior
+ *
+ **/
+ctr_object* ctr_json_default_response(ctr_object* myself, ctr_argument* argumentList) {
+
+	ctr_object* msgObj = ctr_internal_cast2string(argumentList->object);
+	char* msg = ctr_heap_allocate_cstring(msgObj);
+
+	ctr_json_internal_error(myself, msg, "Undefined behavior for message");
+
+	ctr_heap_free(msg);
+
+	return myself;
+}
+
 /* Loading */
 
 /**
@@ -187,6 +234,7 @@ ctr_object* ctr_json_tostring_ext2(ctr_object* myself, ctr_argument* argumentLis
 void begin(){
 
 	ctr_object* jsonObject = ctr_json_new(CtrStdWorld, NULL);
+	/* jsonObject->link = CtrStdWorld; */
 
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "new" ), &ctr_json_new );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "delete" ), &ctr_json_delete );
@@ -195,5 +243,6 @@ void begin(){
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString" ), &ctr_json_tostring );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString:" ), &ctr_json_tostring_ext1 );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString:and:" ), &ctr_json_tostring_ext2 );
+	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "respondTo:"), &ctr_json_default_response );
 	ctr_internal_object_add_property(CtrStdWorld, ctr_build_string_from_cstring( "JSON" ), jsonObject, CTR_CATEGORY_PUBLIC_PROPERTY);
 }

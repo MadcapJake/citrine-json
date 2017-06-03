@@ -5,6 +5,7 @@ answer   := 'I am Jake!'.
 
 json := JSON new.
 
+
 json put: question at: 'question'.
 json put: answer   at: 'answer'.
 
@@ -12,4 +13,4 @@ Pen write: ((json toString: 'PRETTY') + '\n').
 
 Pen write: ((json toString: 'SPACED' and: 'PRETTY') + '\n').
 
-json put.
+json delete.

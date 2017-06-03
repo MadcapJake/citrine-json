@@ -1,0 +1,16 @@
+#!/usr/bin/ctr
+
+json := JSON new.
+
+json put: 'Moo' at: 'Cow'.
+json put: 'Meow' at: 'Cat'.
+json put: 'Ruff' at: 'Dog'.
+
+# speak := { :animal ^ json at: animal. }.
+
+catcall := json at: 'Cat'.
+cowcall := json at: 'Cow'.
+
+Pen write: catcall.
+Pen write: cowcall.
+# Pen write: 'The cat goes $$catcall and the cow goes $$cowcall!'.
