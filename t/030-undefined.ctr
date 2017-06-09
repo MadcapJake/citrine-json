@@ -1,2 +1,10 @@
 json := JSON new.
-json wowzers.
+
+{
+    json put: 'BSD' at: 'license'.
+    json wowzers.
+} catch: { :err
+    Pen write: err + '\n'.
+}, run.
+
+json delete.

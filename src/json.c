@@ -2,6 +2,7 @@
 #include <json-c/json.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #define CTR_OBJECT_RESOURCE_JSON 58
 
@@ -62,7 +63,7 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
 
 	int res = json_object_put((json_object*) myself->value.rvalue->ptr);
 
-	if (res == 1)
+	if (res != 1)
 		ctr_json_internal_error(myself,
 					"JSON delete",
 					"Did not succeed in freeing object"
@@ -72,7 +73,7 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
- * JSON put: [string] at: [string]
+ * JSON put: [object] at: [string]
  *
  * Add simple object key-value pair to object. CAUTION: This is not the put
  * function in json-c that decrements a ref count.
@@ -80,19 +81,67 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
  **/
 ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 
-	ctr_object* valObject = ctr_internal_cast2string(argumentList->object);
-	char* val = ctr_heap_allocate_cstring(valObject);
+	ctr_object *keyObject, *putObject;
+	char *putStr = "";
+	void *val = NULL;
 
-	ctr_object* keyObject = ctr_internal_cast2string(argumentList->next->object);
-	char* key = ctr_heap_allocate_cstring(keyObject);
+	putObject = argumentList->object;
 
-	json_object_object_add((struct json_object*) myself->value.rvalue->ptr,
-			       (const char*) key,
-			       json_object_new_string((const char*) val)
-	);
+	keyObject = ctr_internal_cast2string(argumentList->next->object);
+	char *key = ctr_heap_allocate_cstring(keyObject);
+
+	switch (putObject->info.type) {
+		case CTR_OBJECT_TYPE_OTNIL:
+			// Don't add to object?
+			val = NULL;
+			break;
+		case CTR_OBJECT_TYPE_OTBOOL:
+			val = json_object_new_boolean(putObject->value.bvalue);
+			break;
+		case CTR_OBJECT_TYPE_OTNUMBER:
+			if (ctr_number_eq(ctr_number_ceil(putObject, argumentList),
+					  argumentList)) {
+				// Int
+				val = json_object_new_int(putObject->value.nvalue);
+			} else {
+				// Float
+				val = json_object_new_double(putObject->value.nvalue);
+			}
+			break;
+		case CTR_OBJECT_TYPE_OTSTRING:
+			putStr = ctr_heap_allocate_cstring(putObject);
+			val = json_object_new_string(putStr);
+			break;
+		case CTR_OBJECT_TYPE_OTNATFUNC:
+		case CTR_OBJECT_TYPE_OTBLOCK:
+			// Run block applied to the JSON object
+			argumentList->object = ctr_block_run(myself, argumentList, myself);
+			ctr_json_add(myself, argumentList);
+			break;
+		case CTR_OBJECT_TYPE_OTOBJECT:
+		case CTR_OBJECT_TYPE_OTARRAY:
+		case CTR_OBJECT_TYPE_OTMISC:
+		case CTR_OBJECT_TYPE_OTEX:
+			// TODO: Consider supporting some kind of object here?
+			putObject = ctr_internal_cast2string(argumentList->object);
+			putStr = ctr_heap_allocate_cstring(putObject);
+
+			char msg_and_args[80];
+			sprintf(msg_and_args, "JSON put : %s at: '%s'", putStr, key);
+			ctr_heap_free(putStr);
+			ctr_heap_free(key);
+
+			ctr_json_internal_error(myself, msg_and_args, "Cannot put that in there");
+	}
+
+	if (val) {
+		struct json_object* jobj = myself->value.rvalue->ptr;
+		json_object_object_add(jobj, key, val);
+	}
 
 	ctr_heap_free(key);
-	ctr_heap_free(val);
+	/* if (val != NULL) ctr_heap_free(val); */
+	if (putStr != NULL) ctr_heap_free(putStr);
 
 	return myself;
 }
@@ -115,7 +164,7 @@ ctr_object* ctr_json_get(ctr_object* myself, ctr_argument* argumentList) {
 	int found = json_object_object_get_ex(jobj, key, &robj);
 
 	if (!found) {
-		char* msg_and_key = "";
+		char msg_and_key[80];
 		sprintf(msg_and_key, "JSON at: '%s'", key);
 		ctr_json_internal_error(myself, msg_and_key, "Could not locate key");
 		return myself;
