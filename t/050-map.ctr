@@ -1,0 +1,19 @@
+nums := JSON new.
+nums put: 1 at: 'one'.
+nums put: 2 at: 'two'.
+nums put: 3 at: 'three'.
+
+accum := 0.
+nums each: { :k :v
+    Pen write: 'Key: $$k \n'.
+    accum +=: v.
+    Pen write: 'Accum: $$accum \n'.
+}.
+
+nums map: { :key :val
+    var pl := ''.
+    ( val > 1 ) ifTrue: { pl := 's'. }.
+    Pen write: 'I have $$key apple' + pl + '\n'.
+}.
+
+nums delete.

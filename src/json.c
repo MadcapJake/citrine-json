@@ -158,6 +158,34 @@ ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
+ * @internal
+ *
+ * Converts jobj to citrine object.
+ *
+ **/
+ctr_object* ctr_json_internal_j2c(json_object* j) {
+	ctr_object* jsonObjectInstance;
+
+	switch(json_object_get_type(j)) {
+		case json_type_null:
+			return ctr_build_nil();
+		case json_type_boolean:
+			return ctr_build_bool(json_object_get_boolean(j));
+		case json_type_double:
+			return ctr_build_number_from_float(json_object_get_double(j));
+		case json_type_int:
+			return ctr_build_number_from_float(json_object_get_int(j));
+		case json_type_string:
+			return ctr_build_string_from_cstring((char*) json_object_get_string(j));
+		default:
+			jsonObjectInstance = ctr_internal_create_object(CTR_OBJECT_TYPE_OTOBJECT);
+			jsonObjectInstance->link = ctr_internal_object_find_property(CtrStdWorld, ctr_build_string_from_cstring("JSON"), 0);
+			return ctr_json_internal_addjobj(jsonObjectInstance, j);
+
+	}
+}
+
+/**
  * [JSON] at: [string]
  *
  * Gets the object at the field specified
@@ -182,25 +210,53 @@ ctr_object* ctr_json_get(ctr_object* myself, ctr_argument* argumentList) {
 	}
 	ctr_heap_free(key);
 
-	ctr_object* jsonObjectInstance;
+	return ctr_json_internal_j2c(robj);
+}
 
-	switch(json_object_get_type(robj)) {
-		case json_type_null:
-			return ctr_build_nil();
-		case json_type_boolean:
-			return ctr_build_bool(json_object_get_boolean(robj));
-		case json_type_double:
-			return ctr_build_number_from_float(json_object_get_double(robj));
-		case json_type_int:
-			return ctr_build_number_from_float(json_object_get_int(robj));
-		case json_type_string:
-			return ctr_build_string_from_cstring((char*) json_object_get_string(robj));
-		default:
-			jsonObjectInstance = ctr_internal_create_object(CTR_OBJECT_TYPE_OTOBJECT);
-			jsonObjectInstance->link = myself;
-			return ctr_json_internal_addjobj(jsonObjectInstance, robj);
+/**
+ * [JSON] map: [Block]
+ *
+ * Maps the json for_each key and value to Citrine block arguments. Works just
+ * like the builtin map/each for Citrine maps.
+ *
+ **/
+ctr_object* ctr_json_foreach(ctr_object* myself, ctr_argument* argumentList) {
+	ctr_object* block = argumentList->object;
+	json_object* jobj;
+	char *key;
+	struct json_object *val;
+	struct lh_entry *entry;
 
+	if (block->info.type != CTR_OBJECT_TYPE_OTBLOCK) {
+		CtrStdFlow = ctr_build_string_from_cstring("Expected Block.");
+		CtrStdFlow->info.sticky = 1;
 	}
+	block->info.sticky = 1;
+
+	jobj = myself->value.rvalue->ptr;
+
+ 	for(entry = json_object_get_object(jobj)->head;
+	    (entry ? (key = (char*)entry->k, val = (struct json_object*)entry->v, entry) : 0);
+	    entry = entry->next) {
+		ctr_argument* arguments = (ctr_argument*) ctr_heap_allocate( sizeof( ctr_argument ) );
+		ctr_argument* argument2 = (ctr_argument*) ctr_heap_allocate( sizeof( ctr_argument ) );
+		ctr_argument* argument3 = (ctr_argument*) ctr_heap_allocate( sizeof( ctr_argument ) );
+		arguments->object = ctr_build_string_from_cstring(key);
+		argument2->object = ctr_json_internal_j2c(val);
+		argument3->object = myself;
+		arguments->next = argument2;
+		argument2->next = argument3;
+		ctr_block_run(block, arguments, NULL);
+		if (CtrStdFlow == CtrStdContinue) CtrStdFlow = NULL;
+		ctr_heap_free( arguments );
+		ctr_heap_free( argument2 );
+		ctr_heap_free( argument3 );
+		if (CtrStdFlow == CtrStdBreak) break;
+	}
+	if (CtrStdFlow == CtrStdBreak) CtrStdFlow = NULL;
+	block->info.mark = 0;
+	block->info.sticky = 0;
+	return myself;
 }
 
 /* Printing */
@@ -301,6 +357,8 @@ void begin(){
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "type" ), &ctr_json_type );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "put:at:" ), &ctr_json_add );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "at:" ), &ctr_json_get );
+	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "map:" ), &ctr_json_foreach );
+	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "each:" ), &ctr_json_foreach );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString" ), &ctr_json_tostring );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString:" ), &ctr_json_tostring_ext1 );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString:and:" ), &ctr_json_tostring_ext2 );
