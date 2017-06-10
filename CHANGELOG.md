@@ -1,4 +1,6 @@
 ## [Unreleased]
+### Added
+- `type` method and test
 ### Fixed
 - Change log tag links
 

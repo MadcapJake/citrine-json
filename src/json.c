@@ -73,6 +73,17 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
+ * JSON type.
+ *
+ * Returns 'JSON' as the type string
+ *
+ **/
+ctr_object* ctr_json_type(ctr_object* myself, ctr_argument* argumentList) {
+
+	return ctr_build_string_from_cstring("JSON");
+}
+
+/**
  * JSON put: [object] at: [string]
  *
  * Add simple object key-value pair to object. CAUTION: This is not the put
@@ -287,6 +298,7 @@ void begin(){
 
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "new" ), &ctr_json_new );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "delete" ), &ctr_json_delete );
+	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "type" ), &ctr_json_type );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "put:at:" ), &ctr_json_add );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "at:" ), &ctr_json_get );
 	ctr_internal_create_func(jsonObject, ctr_build_string_from_cstring( "toString" ), &ctr_json_tostring );

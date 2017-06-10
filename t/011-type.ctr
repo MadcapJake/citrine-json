@@ -1,0 +1,3 @@
+json := JSON new.
+Pen write: (json type) + '\n'.
+json delete.
