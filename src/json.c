@@ -40,7 +40,7 @@ ctr_object* ctr_json_internal_addjobj(ctr_object* myself, json_object* jobj) {
 }
 
 /**
- * JSONObject new.
+ * JSON new.
  *
  * Creates new JSONObject via json_object_new_object
  *
@@ -54,7 +54,7 @@ ctr_object* ctr_json_new(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
- * JSON delete.
+ * [JSON] delete.
  *
  * Destroy JSONObject in variable jobj
  *
@@ -73,7 +73,7 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
- * JSON type.
+ * [JSON] type.
  *
  * Returns 'JSON' as the type string
  *
@@ -84,7 +84,7 @@ ctr_object* ctr_json_type(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
- * JSON put: [object] at: [string]
+ * [JSON] put: [object] at: [string]
  *
  * Add simple object key-value pair to object. CAUTION: This is not the put
  * function in json-c that decrements a ref count.
@@ -158,7 +158,7 @@ ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 }
 
 /**
- * JSON at: [string]
+ * [JSON] at: [string]
  *
  * Gets the object at the field specified
  *
@@ -206,7 +206,7 @@ ctr_object* ctr_json_get(ctr_object* myself, ctr_argument* argumentList) {
 /* Printing */
 
 /**
- * JSON toString
+ * [JSON] toString
  *
  * Simple conversion to string with the non-argument version of the c func
  *
@@ -250,7 +250,7 @@ ctr_object* ctr_json_tostring_ext1(ctr_object* myself, ctr_argument* argumentLis
 }
 
 /**
- * JSONObject toString: [string] and: [string]
+ * [JSON] toString: [string] and: [string]
  *
  * Takes a string argument representing the string options available
  * when printing in json-c, PLAIN, PRETTY, SPACED
