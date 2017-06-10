@@ -1,0 +1,16 @@
+#!/usr/bin/ctr
+
+json := JSON new.
+
+json put: 'bonjour' at: 'hello'.
+json put: 'au revoir' at: 'goodbye'.
+json put: 2 at: 'translations'.
+json put: 'french' at: 'language'.
+json put: True at: 'ascii'.
+json put: Nil at: 'students'.
+
+Pen write: ((json toString: 'SPACED' and: 'PRETTY') + '\n').
+
+json delete.
+
+

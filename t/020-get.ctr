@@ -11,8 +11,6 @@ speak := { :animal ^ json at: animal. }.
 catcall := speak applyTo: 'Cat'.
 cowcall := speak applyTo: 'Cow'.
 
-Pen write: 'Printing calls...'.
-
 Pen write: catcall.
 Pen write: cowcall.
 Pen write: '\n'.

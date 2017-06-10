@@ -82,7 +82,7 @@ ctr_object* ctr_json_delete(ctr_object* myself, ctr_argument* argumentList) {
 ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 
 	ctr_object *keyObject, *putObject;
-	char *putStr = "";
+	char *putStr;
 	void *val = NULL;
 
 	putObject = argumentList->object;
@@ -102,15 +102,16 @@ ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 			if (ctr_number_eq(ctr_number_ceil(putObject, argumentList),
 					  argumentList)) {
 				// Int
-				val = json_object_new_int(putObject->value.nvalue);
+				val = json_object_new_int((int) putObject->value.nvalue);
 			} else {
 				// Float
-				val = json_object_new_double(putObject->value.nvalue);
+				val = json_object_new_double((double) putObject->value.nvalue);
 			}
 			break;
 		case CTR_OBJECT_TYPE_OTSTRING:
 			putStr = ctr_heap_allocate_cstring(putObject);
 			val = json_object_new_string(putStr);
+			ctr_heap_free(putStr);
 			break;
 		case CTR_OBJECT_TYPE_OTNATFUNC:
 		case CTR_OBJECT_TYPE_OTBLOCK:
@@ -141,7 +142,6 @@ ctr_object* ctr_json_add(ctr_object* myself, ctr_argument* argumentList) {
 
 	ctr_heap_free(key);
 	/* if (val != NULL) ctr_heap_free(val); */
-	if (putStr != NULL) ctr_heap_free(putStr);
 
 	return myself;
 }
