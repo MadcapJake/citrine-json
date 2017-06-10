@@ -1,4 +1,6 @@
 ## [Unreleased]
+### Fixed
+- Change log tag links
 
 ## [0.1.1] - 2017-06-10
 ### Added
@@ -14,5 +16,5 @@
 - Add basic respondTo method
 - Add new and delete method for a JSON object
 
-[Unreleased]: https://github.com/MadcapJake/citrine-json/compare/v0.1.0...HEAD
-[0.1.1]: https://github.com/MadcapJake/citrine-json/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/MadcapJake/citrine-json/compare/0.1.1...HEAD
+[0.1.1]: https://github.com/MadcapJake/citrine-json/compare/0.1.0...0.1.1
